@@ -103,6 +103,16 @@
 
 <ul id="steps"></ul>
 
+<section style="padding: 1.5rem;">
+  <h2 style="margin-bottom: 0.5rem;">Status History</h2>
+  <ul id="history" style="padding-left: 0; list-style: none;"></ul>
+</section>
+
+<section style="padding: 1.5rem;">
+  <h2 style="margin-bottom: 0.5rem;">Timeline</h2>
+  <div id="timeline" style="font-size: 0.9rem; color: var(--secondary);"></div>
+</section>
+
 <script>
   const defaultSteps = [
     { title: "Initial Research", desc: "Learn SSI / SSDI basics", done: true },
@@ -148,10 +158,88 @@
     steps[i].done = !steps[i].done;
     save();
     render();
+
+  // Status history
+  const historyKey = "statusHistory";
+
+  function logStatus(text) {
+    const history = JSON.parse(localStorage.getItem(historyKey)) || [];
+    history.unshift({ text, date: new Date().toISOString() });
+    localStorage.setItem(historyKey, JSON.stringify(history));
+    renderHistory();
+    renderTimeline();
+  }
+
+  function renderHistory() {
+    const history = JSON.parse(localStorage.getItem(historyKey)) || [];
+    const ul = document.getElementById("history");
+    if (!ul) return;
+    ul.innerHTML = "";
+    history.slice(0, 10).forEach(item => {
+      const li = document.createElement("li");
+      li.style.marginBottom = "0.5rem";
+      li.textContent = `${new Date(item.date).toLocaleDateString()}: ${item.text}`;
+      ul.appendChild(li);
+    });
+  }
+
+  function renderTimeline() {
+    const history = JSON.parse(localStorage.getItem(historyKey)) || [];
+    const el = document.getElementById("timeline");
+    if (!el) return;
+    if (history.length === 0) {
+      el.textContent = "No updates logged yet.";
+      return;
+    }
+    const first = new Date(history[history.length - 1].date);
+    const days = Math.floor((Date.now() - first.getTime()) / (1000 * 60 * 60 * 24));
+    el.textContent = `Tracking for ${days} days since first recorded update.`;
+  }
+
+  renderHistory();
+  renderTimeline();(`${steps[i].title} marked ${steps[i].done ? 'complete' : 'incomplete'}`);
+    render();
   }
 
   render();
+  // Reminder logic
+  const REMINDER_KEY = "lastCheckDate";
+  const INTERVAL_KEY = "checkIntervalDays";
+
+  if (!localStorage.getItem(INTERVAL_KEY)) {
+    localStorage.setItem(INTERVAL_KEY, "30"); // default 30 days
+  }
+
+  function daysSinceLastCheck() {
+    const last = localStorage.getItem(REMINDER_KEY);
+    if (!last) return Infinity;
+    const diff = Date.now() - new Date(last).getTime();
+    return diff / (1000 * 60 * 60 * 24);
+  }
+
+  function checkReminder() {
+    const interval = parseInt(localStorage.getItem(INTERVAL_KEY));
+    if (daysSinceLastCheck() >= interval) {
+      alert("Reminder: It may be time to check your SSA / ID.me status.");
+    }
+  }
+
+  function markCheckedToday() {
+    localStorage.setItem(REMINDER_KEY, new Date().toISOString());
+    alert("Check-in saved. You're up to date.");
+  }
+
+  checkReminder();
 </script>
+
+<section style="padding: 1.5rem;">
+  <button onclick="markCheckedToday()" style="padding: 0.8rem 1rem; border-radius: 10px; background: var(--accent); color: white; font-weight: 600;">I checked SSA today</button>
+  <p style="margin-top: 0.8rem; color: var(--secondary); font-size: 0.85rem;">Reminder interval (days):</p>
+  <input type="number" min="7" max="90" value="30" onchange="localStorage.setItem('checkIntervalDays', this.value)" style="padding: 0.4rem; width: 80px;" />
+</section>
+
+</body>
+</html>
 
 </body>
 </html>
