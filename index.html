@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Disability Progress</title>
+
+  <!-- PWA Meta -->
+  <meta name="theme-color" content="#0a84ff" />
+  <link rel="manifest" href="manifest.json" />
+
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #000000;
+      --secondary: #666666;
+      --accent: #0a84ff;
+      --card: #f2f2f7;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --text: #ffffff;
+        --secondary: #aaaaaa;
+        --card: #1c1c1e;
+      }
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      padding: 1.5rem;
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .progress {
+      padding: 0 1.5rem;
+    }
+
+    progress {
+      width: 100%;
+      height: 12px;
+    }
+
+    .percent {
+      margin-top: 0.5rem;
+      color: var(--secondary);
+    }
+
+    ul {
+      list-style: none;
+      padding: 1.5rem;
+      margin: 0;
+    }
+
+    li {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .step-text {
+      max-width: 80%;
+    }
+
+    .step-title {
+      font-weight: 600;
+    }
+
+    .step-desc {
+      font-size: 0.85rem;
+      color: var(--secondary);
+    }
+
+    button {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+<header>Disability Progress</header>
+
+<section class="progress">
+  <progress id="bar" value="0" max="100"></progress>
+  <div class="percent" id="percent">0% complete</div>
+</section>
+
+<ul id="steps"></ul>
+
+<script>
+  const defaultSteps = [
+    { title: "Initial Research", desc: "Learn SSI / SSDI basics", done: true },
+    { title: "Medical Records", desc: "Collect mental health documentation", done: false },
+    { title: "Application Submitted", desc: "SSI/SSDI filed", done: false },
+    { title: "Lawyer Contacted", desc: "Spoke with disability attorney", done: false },
+    { title: "Waiting Period", desc: "Application under review", done: false },
+    { title: "Decision Received", desc: "Approval or appeal", done: false }
+  ];
+
+  let steps = JSON.parse(localStorage.getItem("disabilitySteps")) || defaultSteps;
+
+  function save() {
+    localStorage.setItem("disabilitySteps", JSON.stringify(steps));
+  }
+
+  function render() {
+    const list = document.getElementById("steps");
+    list.innerHTML = "";
+
+    let completed = 0;
+
+    steps.forEach((step, i) => {
+      if (step.done) completed++;
+
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <div class="step-text">
+          <div class="step-title">${step.title}</div>
+          <div class="step-desc">${step.desc}</div>
+        </div>
+        <button onclick="toggle(${i})">${step.done ? "✔️" : "○"}</button>
+      `;
+      list.appendChild(li);
+    });
+
+    const percent = Math.round((completed / steps.length) * 100);
+    document.getElementById("bar").value = percent;
+    document.getElementById("percent").textContent = `${percent}% complete`;
+  }
+
+  function toggle(i) {
+    steps[i].done = !steps[i].done;
+    save();
+    render();
+  }
+
+  render();
+</script>
+
+</body>
+</html>
